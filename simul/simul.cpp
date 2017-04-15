@@ -31,6 +31,15 @@ int64_t karkar(vector<int64_t> list){
 	return list[0];
 }
 
+// returns absolute value of sums of all elements in a vector
+int64_t vsumup(vector<int64_t> nlist){
+	int64_t total = 0;
+	for(int i = 0; i < 100; i++){
+		total += nlist[i];
+	}
+	return abs(total);
+}
+
 // random number list generator between 1 and 10^12
 vector<int64_t> num_list_gen(default_random_engine& gen){
 	// pick a number between 1 and 10^12 inclusive
@@ -73,67 +82,14 @@ vector<int64_t> sgen(default_random_engine& gen, vector<int64_t> nlist){
 	return nlist1;
 }
 
-
-
-// TESTING
-int64_t sgen1(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand(0, 1);
-	int64_t sum = 0;
-	for(int i = 0; i < 100; i++){
-		int io = rand(gen);
-		int x = (io > 0) ? 1 : -1;
-		sum += x * nlist[i];
-	}
-	return abs(sum);
-}
-
-int64_t rr1_t(default_random_engine& gen, vector<int64_t> nlist){
-	int64_t s0 = sgen1(gen, nlist);
-	for(int i = 0; i < ITER; i++){
-		int64_t s1 = sgen1(gen, nlist);
-		s0 = (s1 < s0) ? s1 : s0;
-	}
-	return s0;
-}
-
-int64_t rr1_t1(default_random_engine& gen, vector<int64_t> nlist){
-	vector<int64_t> s0 = sgen(gen, nlist);
-	for(int i = 0; i < ITER; i++){
-		vector<int64_t> s1 = sgen(gen, nlist);
-		int64_t sum0 = 0;
-		int64_t sum1 = 0;
-		for( int i = 0; i < 100; i++){
-			sum0 += s0[i];
-			sum1 += s1[i];
-		}
-		cout << abs(sum0) << endl;
-		s0 = (abs(sum1) < abs(sum0)) ? s1 : s0;
-	}
-	int64_t sum = 0;
-	for( int i = 0; i < 100; i++){
-		sum += s0[i];
-	}
-	return abs(sum);
-}
-
-
-// TESTING
-
-
 // repeated random under standard form
 int64_t rr1(default_random_engine& gen, vector<int64_t> nlist){
 	vector<int64_t> s0 = sgen(gen, nlist);
-	cout << abs(accumulate(s0.begin(), s0.end(), 0)) << endl;
 	for(int i = 0; i < ITER; i++){
 		vector<int64_t> s1 = sgen(gen, nlist);
-		int64_t sum0 = accumulate(s0.begin(), s0.end(), 0);
-		int64_t sum1 = accumulate(s1.begin(), s1.end(), 0);
-		s0 = (abs(sum1) < abs(sum0)) ? s1 : s0;
-		cout << sum0 << endl;
+		s0 = (vsumup(s1) < vsumup(s0)) ? s1 : s0;
 	}
-	int64_t sum = accumulate(s0.begin(), s0.end(), 0);
-	cout << sum << endl;
-	return abs(sum);
+	return vsumup(s0);
 }
 
 // repeated random under prepartitioning
@@ -157,13 +113,9 @@ int64_t hc1(default_random_engine& gen, vector<int64_t> nlist){
 		int b = rand1(gen);
 		s1[a] = (rand2(gen) > 0) ? s1[a] : -s1[a];
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
-
-		int64_t sum0 = abs(accumulate(s0.begin(), s0.end(), 0));
-		int64_t sum1 = abs(accumulate(s1.begin(), s1.end(), 0));
-		s0 = (sum1 < sum0) ? s1 : s0;
+		s0 = (vsumup(s1) < vsumup(s0)) ? s1 : s0;
 	}
-	int64_t sum = abs(accumulate(s0.begin(), s0.end(), 0));
-	return sum;
+	return vsumup(s0);
 }
 
 // hill climbing under prepartitioning
@@ -196,19 +148,14 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 		int b = rand1(gen);
 		s1[a] = (rand2(gen) > 0) ? s1[a] : -s1[a];
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
-
-		int64_t sum0 = abs(accumulate(s0.begin(), s0.end(), 0));
-		int64_t sum1 = abs(accumulate(s1.begin(), s1.end(), 0));
-		int64_t sum2 = abs(accumulate(s2.begin(), s2.end(), 0));
 		
-		if(sum1 < sum0 || rand3(gen) < exp((double)-(sum1 - sum0) / 
+		if(vsumup(s1) < vsumup(s0) || rand3(gen) < exp((double)-(vsumup(s1) < vsumup(s0)) / 
 			((double)pow(10, 10) * (double)pow((double)0.8, (double)i/(double)300)))){
 			s0 = s1;
 		}
-		s2 = (sum0 < sum2) ? s0 : s2;
+		s2 = (vsumup(s0) < vsumup(s2)) ? s0 : s2;
 	}
-	int64_t sum = abs(accumulate(s2.begin(), s2.end(), 0));
-	return sum;
+	return vsumup(s2);
 }
 
 // simulated annealing under prepartitioning
@@ -244,7 +191,7 @@ int main(){
 
 
 	vector<int64_t> numlist = num_list_gen(gen);
-	cout << rr1_t1(gen, numlist) << endl;
+	cout << rr1(gen, numlist) << endl;
 	
 	/*vector<int64_t> test1 = sgen(gen, numlist);
 	vector<int64_t> test2 = sgen(gen, numlist);
