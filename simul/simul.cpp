@@ -1,14 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
 #include <chrono>
 #include <random>
 #include <stdlib.h>
 #include <numeric>
 #include <cmath>
+#include <time.h>
+#include <algorithm>
 
 #define ITER 25000
 
@@ -55,13 +54,13 @@ vector<int64_t> num_list_gen(default_random_engine& gen){
 // prepartitioning algorithm; returns prepartitioned vector; requires KK
 vector<int64_t> pgen(default_random_engine& gen, vector<int64_t> nlist){
 	uniform_int_distribution<int> rand(0, 99);
-	vector<int> p;
+	int randlst[100];
 	for(int i = 0; i < 100; i++){
-		p.push_back(rand(gen));
+		randlst[i] = rand(gen);
 	}
 	vector<int64_t> nlist1(100, 0);
 	for(int j = 0; j < 100; j++){
-		nlist1[p[j]] += nlist[j];
+		nlist1[randlst[j]] += nlist[j];
 	}
 	return nlist1;
 }
@@ -189,10 +188,87 @@ int main(){
 	long long seed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine gen((unsigned)seed);
 
+    // sum of residues for all trials
+    int64_t kk_sum = 0;
+    int64_t rr1_sum = 0, rr2_sum = 0;
+    int64_t hc1_sum = 0, hc2_sum = 0;
+    int64_t sa1_sum = 0, sa2_sum = 0;
 
-	vector<int64_t> numlist = num_list_gen(gen);
-	cout << rr1(gen, numlist) << endl;
-	
+/*    clock_t tkk_s, tkk_e;
+    clock_t trr1_s, trr1_e, trr2_s, trr2_e;
+    clock_t thc1_s, thc1_e, thc2_s, thc2_e;
+    clock_t tsa1_s, tsa1_e, tsa2_s, tsa2_e;*/
+
+    // clock variables
+    clock_t t0, t1;
+
+    // sum of time in seconds for all trials
+    double tkk = 0;
+    double trr1 = 0, trr2 = 0;
+    double thc1 = 0, thc2 = 0;
+    double tsa1 = 0, tsa2 = 0;
+
+    // testing
+    for(int trial = 0; trial < 100; trial++){
+		vector<int64_t> numlist = num_list_gen(gen);
+		
+		t0 = clock();
+		kk_sum += karkar(numlist);
+		t1= clock();
+		tkk += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		rr1_sum += rr1(gen, numlist);
+		t1= clock();
+		trr1 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		rr2_sum += rr2(gen, numlist);
+		t1= clock();
+		trr2 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		hc1_sum += hc1(gen, numlist);
+		t1= clock();
+		thc1 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		hc2_sum += hc2(gen, numlist);
+		t1= clock();
+		thc2 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		sa1_sum += sa1(gen, numlist);
+		t1= clock();
+		tsa1 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		t0 = clock();
+		sa2_sum += sa2(gen, numlist);
+		t1= clock();
+		tsa2 += double(t1 - t0)/CLOCKS_PER_SEC;
+    }
+
+    cout << "kk average residue: " << kk_sum / (int64_t) 100 << endl;
+    cout << "kk average time taken (s) : " << tkk / (double) 100 << endl << endl;
+
+    cout << "rr1 average residue: " << rr1_sum / (int64_t) 100 << endl;
+    cout << "rr1 average time taken (s) : " << trr1 / (double) 100 << endl << endl;
+
+    cout << "rr2 average residue: " << rr2_sum / (int64_t) 100 << endl;
+    cout << "rr2 average time taken (s) : " << trr2 / (double) 100 << endl << endl;
+
+    cout << "hc1 average residue: " << hc1_sum / (int64_t) 100 << endl;
+    cout << "hc1 average time taken (s) : " << thc1 / (double) 100 << endl << endl;
+
+    cout << "hc2 average residue: " << hc2_sum / (int64_t) 100 << endl;
+    cout << "hc2 average time taken (s) : " << thc2 / (double) 100 << endl << endl;
+
+    cout << "sa1 average residue: " << sa1_sum / (int64_t) 100 << endl;
+    cout << "sa1 average time taken (s) : " << tsa1 / (double) 100 << endl << endl;
+
+    cout << "sa2 average residue: " << sa2_sum / (int64_t) 100 << endl;
+    cout << "sa2 average time taken (s) : " << tsa2 / (double) 100 << endl << endl;
+
 	/*vector<int64_t> test1 = sgen(gen, numlist);
 	vector<int64_t> test2 = sgen(gen, numlist);
 	vector<int64_t> test3 = sgen(gen, numlist);
@@ -208,8 +284,6 @@ int main(){
 	cout << "sum3: " << abs(accumulate(test3.begin(), test3.end(), 0)) << endl;
 	cout << "sum4: " << abs(accumulate(test4.begin(), test4.end(), 0)) << endl;
 	cout << "sum5: " << abs(accumulate(test5.begin(), test5.end(), 0)) << endl;*/
-
-
 
     return 0;
 }
