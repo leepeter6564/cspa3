@@ -58,7 +58,7 @@ vector<int64_t> num_list_gen(default_random_engine& gen){
 vector<int64_t> sgen(default_random_engine& gen, vector<int64_t> nlist){
 	vector<int> s;
 	for(int i = 0; i < 100; i++){
-		int io = rand1(gen);
+		int io = rand2(gen);
 		int x = (io > 0) ? 1 : -1;
 		s.push_back(x);
 	}
@@ -75,13 +75,13 @@ vector<int64_t> sgen(default_random_engine& gen, vector<int64_t> nlist){
 vector<int64_t> prepart(default_random_engine& gen){
 	vector<int64_t> partition;
 	for(int i = 0; i < 100; i++){
-		randlst.push_back(rand1(gen));
+		partition.push_back(rand1(gen));
 	}
 	return partition;
 }
 
 // second produce partitioned vector
-vector<int64_t> partition(vector<int64_t> prepart, vector<int64_t> nlist)
+vector<int64_t> partition(vector<int64_t> prepart, vector<int64_t> nlist){
 	vector<int64_t> nlist1(100, 0);
 	for(int j = 0; j < 100; j++){
 		nlist1[prepart[j]] += nlist[j];
@@ -101,12 +101,13 @@ int64_t rr1(default_random_engine& gen, vector<int64_t> nlist){
 
 // repeated random under prepartitioning
 int64_t rr2(default_random_engine& gen, vector<int64_t> nlist){
-	vector<int64_t> p0 = pgen(gen, nlist);
+	vector<int64_t> ppart0 = prepart(gen);
 	for(int i = 0; i < ITER; i++){
-		vector<int64_t> p1 = pgen(gen, nlist);
-		p0 = (karkar(p1) < karkar(p0)) ? p1 : p0;
+		vector<int64_t> ppart1 = prepart(gen);
+		ppart0 = (karkar(partition(ppart1, nlist)) < karkar(partition(ppart0, nlist)))
+			? ppart1 : ppart0;
 	}
-	return karkar(p0);
+	return karkar(partition(ppart0, nlist));
 }
 
 // hill climbing under standard form
@@ -127,19 +128,20 @@ int64_t hc1(default_random_engine& gen, vector<int64_t> nlist){
 
 // hill climbing under prepartitioning
 int64_t hc2(default_random_engine& gen, vector<int64_t> nlist){
-	vector<int64_t> p0 = pgen(gen, nlist);
+	vector<int64_t> ppart0 = prepart(gen);
 	for(int i = 0; i < ITER; i++){
-		vector<int64_t> p1 = p0;
+		vector<int64_t> ppart1 = ppart0;
 		int a = rand1(gen);
 		int b;
 		do{b = rand1(gen);}
 		while(a == b);
-		p1[a] = p1[b];
-		p1[b] = (rand2(gen) > 0) ? p1[b] : p1[a];
+		ppart1[a] = ppart1[b];
+		ppart1[b] = (rand2(gen) > 0) ? ppart1[b] : ppart1[a];
 
-		p0 = (karkar(p1) < karkar(p0)) ? p1 : p0;
+		ppart0 = (karkar(partition(ppart1, nlist)) < karkar(partition(ppart0, nlist)))
+			? ppart1 : ppart0;
 	}
-	return karkar(p0);
+	return karkar(partition(ppart0, nlist));
 }
 
 // simulated annealing under standard form
@@ -149,10 +151,11 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 	for(int i = 0; i < ITER; i++){
 		vector<int64_t> s1 = s0;
 		int a = rand1(gen);
-		int b = rand1(gen);
-		s1[a] = (rand2(gen) > 0) ? s1[a] : -s1[a];
+		int b;
+		do{b = rand1(gen);}
+		while(a == b);
+		s1[a] = -s1[a];
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
-		
 		if(vsumup(s1) < vsumup(s0)){
 			s0 = s1;
 		}
@@ -167,26 +170,31 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 
 // simulated annealing under prepartitioning
 int64_t sa2(default_random_engine& gen, vector<int64_t> nlist){
-	vector<int64_t> p0 = pgen(gen, nlist);
-	vector<int64_t> p2 = p0;
+	vector<int64_t> ppart0 = prepart(gen);
+	vector<int64_t> ppart2 = ppart0;
 	for(int i = 0; i < ITER; i++){
-		vector<int64_t> p1 = p0;
+		vector<int64_t> ppart1 = ppart0;
 		int a = rand1(gen);
-		int b = rand1(gen);
-		p1[a] = (rand2(gen) > 0) ? p1[a] : p1[b];
-		p1[b] = (rand2(gen) > 0) ? p1[b] : p1[a];
+		int b;
+		do{b = rand1(gen);}
+		while(a == b);
+
+		ppart1[a] = ppart1[b];
+		ppart1[b] = (rand2(gen) > 0) ? ppart1[b] : ppart1[a];
 		
-		if(karkar(p1) < karkar(p0)){
-			p0 = p1;
+		if(karkar(partition(ppart1, nlist)) < karkar(partition(ppart0, nlist))){
+			ppart0 = ppart1;
 		}
-		else if(rand3(gen) < exp((double)-(karkar(p1) - karkar(p0)) / 
+		else if(rand3(gen) < exp((double)-(karkar(partition(ppart1, nlist))
+			- karkar(partition(ppart0, nlist))) / 
 			((double)10000000000 * (double)pow((double)0.8, (double)i/(double)300)))){
-			p0 = p1;
+			ppart0 = ppart1;
 		}
-		p2 = (karkar(p0) < karkar(p2)) ? p0 : p2;
+		ppart2 = (karkar(partition(ppart0, nlist)) < karkar(partition(ppart2, nlist)))
+			? ppart0 : ppart2;
 	}
 	
-	return karkar(p2);
+	return karkar(partition(ppart2, nlist));
 }
 
 
