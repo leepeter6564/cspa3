@@ -13,6 +13,11 @@
 
 using namespace std;
 
+// pick a number
+uniform_int_distribution<int64_t> rando(1, pow(10, 12));
+uniform_int_distribution<int> rand1(0, 99);
+uniform_int_distribution<int> rand2(0, 1);
+uniform_real_distribution<double> rand3(0, 1);
 
 // KK algorithm
 int64_t karkar(vector<int64_t> list){
@@ -41,42 +46,45 @@ int64_t vsumup(vector<int64_t> nlist){
 
 // random number list generator between 1 and 10^12
 vector<int64_t> num_list_gen(default_random_engine& gen){
-	// pick a number between 1 and 10^12 inclusive
-	uniform_int_distribution<int64_t> rand(1, pow(10, 12));
 	// put those in a new vector
 	vector<int64_t> num_list;
 	for(int i = 0; i < 100; i++){
-		num_list.push_back(rand(gen));
+		num_list.push_back(rando(gen));
 	}
 	return num_list;
 }
 
-// prepartitioning algorithm; returns prepartitioned vector; requires KK
-vector<int64_t> pgen(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand(0, 99);
-	int randlst[100];
-	for(int i = 0; i < 100; i++){
-		randlst[i] = rand(gen);
-	}
-	vector<int64_t> nlist1(100, 0);
-	for(int j = 0; j < 100; j++){
-		nlist1[randlst[j]] += nlist[j];
-	}
-	return nlist1;
-}
-
 // standard form algorithm
 vector<int64_t> sgen(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand(0, 1);
 	vector<int> s;
 	for(int i = 0; i < 100; i++){
-		int io = rand(gen);
+		int io = rand1(gen);
 		int x = (io > 0) ? 1 : -1;
 		s.push_back(x);
 	}
 	vector<int64_t> nlist1;
 	for(int i = 0; i < 100; i++){
 		nlist1.push_back(nlist[i] * s[i]);
+	}
+	return nlist1;
+}
+
+
+// prepartitioning: done in two steps
+// first give partition ordering
+vector<int64_t> prepart(default_random_engine& gen){
+	vector<int64_t> partition;
+	for(int i = 0; i < 100; i++){
+		randlst.push_back(rand1(gen));
+	}
+	return partition;
+}
+
+// second produce partitioned vector
+vector<int64_t> partition(vector<int64_t> prepart, vector<int64_t> nlist)
+	vector<int64_t> nlist1(100, 0);
+	for(int j = 0; j < 100; j++){
+		nlist1[prepart[j]] += nlist[j];
 	}
 	return nlist1;
 }
@@ -103,14 +111,14 @@ int64_t rr2(default_random_engine& gen, vector<int64_t> nlist){
 
 // hill climbing under standard form
 int64_t hc1(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand1(0, 99);
-	uniform_int_distribution<int> rand2(0, 1);
 	vector<int64_t> s0 = sgen(gen, nlist);
 	for(int i = 0; i < ITER; i++){
 		vector<int64_t> s1 = s0;
 		int a = rand1(gen);
-		int b = rand1(gen);
-		s1[a] = (rand2(gen) > 0) ? s1[a] : -s1[a];
+		int b;
+		do{b = rand1(gen);}
+		while(a == b);
+		s1[a] = -s1[a];
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
 		s0 = (vsumup(s1) < vsumup(s0)) ? s1 : s0;
 	}
@@ -119,14 +127,14 @@ int64_t hc1(default_random_engine& gen, vector<int64_t> nlist){
 
 // hill climbing under prepartitioning
 int64_t hc2(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand1(0, 99);
-	uniform_int_distribution<int> rand2(0, 1);
 	vector<int64_t> p0 = pgen(gen, nlist);
 	for(int i = 0; i < ITER; i++){
 		vector<int64_t> p1 = p0;
 		int a = rand1(gen);
-		int b = rand1(gen);
-		p1[a] = (rand2(gen) > 0) ? p1[a] : p1[b];
+		int b;
+		do{b = rand1(gen);}
+		while(a == b);
+		p1[a] = p1[b];
 		p1[b] = (rand2(gen) > 0) ? p1[b] : p1[a];
 
 		p0 = (karkar(p1) < karkar(p0)) ? p1 : p0;
@@ -136,9 +144,6 @@ int64_t hc2(default_random_engine& gen, vector<int64_t> nlist){
 
 // simulated annealing under standard form
 int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand1(0, 99);
-	uniform_int_distribution<int> rand2(0, 1);
-	uniform_real_distribution<double> rand3(0, 1);
 	vector<int64_t> s0 = sgen(gen, nlist);
 	vector<int64_t> s2 = s0;
 	for(int i = 0; i < ITER; i++){
@@ -148,7 +153,10 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 		s1[a] = (rand2(gen) > 0) ? s1[a] : -s1[a];
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
 		
-		if(vsumup(s1) < vsumup(s0) || rand3(gen) < exp((double)-(vsumup(s1) < vsumup(s0)) / 
+		if(vsumup(s1) < vsumup(s0)){
+			s0 = s1;
+		}
+		else if(rand3(gen) < exp((double)-(vsumup(s1) < vsumup(s0)) / 
 			((double)10000000000 * (double)pow((double)0.8, (double)i/(double)300)))){
 			s0 = s1;
 		}
@@ -159,9 +167,6 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 
 // simulated annealing under prepartitioning
 int64_t sa2(default_random_engine& gen, vector<int64_t> nlist){
-	uniform_int_distribution<int> rand1(0, 99);
-	uniform_int_distribution<int> rand2(0, 1);
-	uniform_real_distribution<double> rand3(0, 1);
 	vector<int64_t> p0 = pgen(gen, nlist);
 	vector<int64_t> p2 = p0;
 	for(int i = 0; i < ITER; i++){
@@ -171,7 +176,10 @@ int64_t sa2(default_random_engine& gen, vector<int64_t> nlist){
 		p1[a] = (rand2(gen) > 0) ? p1[a] : p1[b];
 		p1[b] = (rand2(gen) > 0) ? p1[b] : p1[a];
 		
-		if(karkar(p1) < karkar(p0) || rand3(gen) < exp((double)-(karkar(p1) - karkar(p0)) / 
+		if(karkar(p1) < karkar(p0)){
+			p0 = p1;
+		}
+		else if(rand3(gen) < exp((double)-(karkar(p1) - karkar(p0)) / 
 			((double)10000000000 * (double)pow((double)0.8, (double)i/(double)300)))){
 			p0 = p1;
 		}
@@ -207,7 +215,7 @@ int main(){
     double tsa1 = 0, tsa2 = 0;
 
     // testing
-    for(int trial = 0; trial < 100; trial++){
+    for(int trial = 0; trial < 2; trial++){
 		vector<int64_t> numlist = num_list_gen(gen);
 		
 		t0 = clock();
@@ -244,32 +252,28 @@ int main(){
 		sa2_sum += sa2(gen, numlist);
 		t1= clock();
 		tsa2 += double(t1 - t0)/CLOCKS_PER_SEC;
-
-		if(trial % 10 == 0){
-			cout << "Trials " << trial << " completed!" << endl;
-		}
     }
 
-    cout << "kk average residue: " << kk_sum / (int64_t) 100 << endl;
-    cout << "kk average time taken (s) : " << tkk / (double) 100 << endl << endl;
+    cout << "kk average residue: " << kk_sum / (int64_t) 2 << endl;
+    cout << "kk average time taken (s) : " << tkk / (double) 2 << endl << endl;
 
-    cout << "rr1 average residue: " << rr1_sum / (int64_t) 100 << endl;
-    cout << "rr1 average time taken (s) : " << trr1 / (double) 100 << endl << endl;
+    cout << "rr1 average residue: " << rr1_sum / (int64_t) 2 << endl;
+    cout << "rr1 average time taken (s) : " << trr1 / (double) 2 << endl << endl;
 
-    cout << "rr2 average residue: " << rr2_sum / (int64_t) 100 << endl;
-    cout << "rr2 average time taken (s) : " << trr2 / (double) 100 << endl << endl;
+    cout << "rr2 average residue: " << rr2_sum / (int64_t) 2 << endl;
+    cout << "rr2 average time taken (s) : " << trr2 / (double) 2 << endl << endl;
 
-    cout << "hc1 average residue: " << hc1_sum / (int64_t) 100 << endl;
-    cout << "hc1 average time taken (s) : " << thc1 / (double) 100 << endl << endl;
+    cout << "hc1 average residue: " << hc1_sum / (int64_t) 2 << endl;
+    cout << "hc1 average time taken (s) : " << thc1 / (double) 2 << endl << endl;
 
-    cout << "hc2 average residue: " << hc2_sum / (int64_t) 100 << endl;
-    cout << "hc2 average time taken (s) : " << thc2 / (double) 100 << endl << endl;
+    cout << "hc2 average residue: " << hc2_sum / (int64_t) 2 << endl;
+    cout << "hc2 average time taken (s) : " << thc2 / (double) 2 << endl << endl;
 
-    cout << "sa1 average residue: " << sa1_sum / (int64_t) 100 << endl;
-    cout << "sa1 average time taken (s) : " << tsa1 / (double) 100 << endl << endl;
+    cout << "sa1 average residue: " << sa1_sum / (int64_t) 2 << endl;
+    cout << "sa1 average time taken (s) : " << tsa1 / (double) 2 << endl << endl;
 
-    cout << "sa2 average residue: " << sa2_sum / (int64_t) 100 << endl;
-    cout << "sa2 average time taken (s) : " << tsa2 / (double) 100 << endl << endl;
+    cout << "sa2 average residue: " << sa2_sum / (int64_t) 2 << endl;
+    cout << "sa2 average time taken (s) : " << tsa2 / (double) 2 << endl << endl;
 
 	/*vector<int64_t> test1 = sgen(gen, numlist);
 	vector<int64_t> test2 = sgen(gen, numlist);
