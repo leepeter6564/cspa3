@@ -149,7 +149,7 @@ int64_t sa1(default_random_engine& gen, vector<int64_t> nlist){
 		s1[b] = (rand2(gen) > 0) ? s1[b] : -s1[b];
 		
 		if(vsumup(s1) < vsumup(s0) || rand3(gen) < exp((double)-(vsumup(s1) < vsumup(s0)) / 
-			((double)pow(10, 10) * (double)pow((double)0.8, (double)i/(double)300)))){
+			((double)10000000000 * (double)pow((double)0.8, (double)i/(double)300)))){
 			s0 = s1;
 		}
 		s2 = (vsumup(s0) < vsumup(s2)) ? s0 : s2;
@@ -162,7 +162,7 @@ int64_t sa2(default_random_engine& gen, vector<int64_t> nlist){
 	uniform_int_distribution<int> rand1(0, 99);
 	uniform_int_distribution<int> rand2(0, 1);
 	uniform_real_distribution<double> rand3(0, 1);
-	vector<int64_t> p0 = sgen(gen, nlist);
+	vector<int64_t> p0 = pgen(gen, nlist);
 	vector<int64_t> p2 = p0;
 	for(int i = 0; i < ITER; i++){
 		vector<int64_t> p1 = p0;
@@ -170,11 +170,9 @@ int64_t sa2(default_random_engine& gen, vector<int64_t> nlist){
 		int b = rand1(gen);
 		p1[a] = (rand2(gen) > 0) ? p1[a] : p1[b];
 		p1[b] = (rand2(gen) > 0) ? p1[b] : p1[a];
-
-
 		
 		if(karkar(p1) < karkar(p0) || rand3(gen) < exp((double)-(karkar(p1) - karkar(p0)) / 
-			((double)pow(10, 10) * (double)pow((double)0.8, (double)i/(double)300)))){
+			((double)10000000000 * (double)pow((double)0.8, (double)i/(double)300)))){
 			p0 = p1;
 		}
 		p2 = (karkar(p0) < karkar(p2)) ? p0 : p2;
@@ -246,6 +244,10 @@ int main(){
 		sa2_sum += sa2(gen, numlist);
 		t1= clock();
 		tsa2 += double(t1 - t0)/CLOCKS_PER_SEC;
+
+		if(trial % 10 == 0){
+			cout << "Trials " << trial << " completed!" << endl;
+		}
     }
 
     cout << "kk average residue: " << kk_sum / (int64_t) 100 << endl;
