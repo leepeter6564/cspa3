@@ -221,18 +221,6 @@ int main(){
 	long long seed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine gen((unsigned)seed);
 
-    /*vector<int64_t> test = prepart(gen);
-
-    vector<int64_t> numlist = num_list_gen(gen);
-    for(int i = 0; i < 100; i++){
-    	cout << test[i] << endl;
-    }*/
- /*   cout << "The karkar value is: " << karkar(numlist) << endl;
-
-    for(int i = 0; i < 100; i++){
-    	cout << numlist[i] << endl;
-    }
-*/
 
     // sum of residues for all trials
     int64_t kk_sum = 0;
@@ -309,6 +297,7 @@ int main(){
 
     cout << "sa2 average residue: " << sa2_sum / (int64_t) 100 << endl;
     cout << "sa2 average time taken (s) : " << tsa2 / (double) 100 << endl << endl;
+
 
     return 0;
 }
