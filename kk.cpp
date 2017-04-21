@@ -13,7 +13,7 @@ int64_t kar_kar(vector<int64_t> list){
 		list.erase(max_element(begin(list), end(list)));
 		int64_t big2 = *max_element(begin(list), end(list));
 		list.erase(max_element(begin(list), end(list)));
-		int64_t diff = abs(big1-big2);
+		int64_t diff = big1-big2;
 		list.push_back(diff);
 	}
 	return list[0];
