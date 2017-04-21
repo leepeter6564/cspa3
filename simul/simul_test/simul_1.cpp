@@ -223,84 +223,75 @@ int main(){
     default_random_engine gen((unsigned)seed);
 
 
-    // sum of residues for all trials
-    int64_t kk_sum = 0;
-    int64_t rr1_sum = 0, rr2_sum = 0;
-    int64_t hc1_sum = 0, hc2_sum = 0;
-    int64_t sa1_sum = 0, sa2_sum = 0;
+    int64_t akk = 0;
+    int64_t arr1 = 0, arr2 = 0;
+    int64_t ahc1 = 0, ahc2 = 0;
+    int64_t asa1 = 0, asa2 = 0;
 
     // clock variables
     clock_t t0, t1;
 
-    // sum of time in seconds for all trials
-    double tkk = 0;
-    double trr1 = 0, trr2 = 0;
-    double thc1 = 0, thc2 = 0;
-    double tsa1 = 0, tsa2 = 0;
+    fstream file;
+    file.open("test.txt");
+    if(!file.is_open()){
+    	cout << "File not open" << endl;
+    	return 0;
+    }
 
-    fstream 
+    file << "kk res, kk time, rr1 res, rr1 time, rr2 res, rr2 time, ";
+    file << "hc1 res, hc1 time, hc2 res, hc2 time, sa1 res, sa1 time, sa2 res, sa2 time";
+    file << endl; 
 
     // testing
     for(int trial = 0; trial < 100; trial++){
 		vector<int64_t> numlist = num_list_gen(gen);
 		
 		t0 = clock();
-		kk_sum += karkar(numlist);
+		akk = karkar(numlist);
 		t1= clock();
-		tkk += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << akk << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		rr1_sum += rr1(gen, numlist);
+		arr1 = rr1(gen, numlist);
 		t1= clock();
-		trr1 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << arr1 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		rr2_sum += rr2(gen, numlist);
+		arr2 = rr2(gen, numlist);
 		t1= clock();
-		trr2 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << arr2 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		hc1_sum += hc1(gen, numlist);
+		ahc1 = hc1(gen, numlist);
 		t1= clock();
-		thc1 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << ahc1 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		hc2_sum += hc2(gen, numlist);
+		ahc2 = hc2(gen, numlist);
 		t1= clock();
-		thc2 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << ahc2 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		sa1_sum += sa1(gen, numlist);
+		asa1 = sa1(gen, numlist);
 		t1= clock();
-		tsa1 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << asa1 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << ", ";
 
 		t0 = clock();
-		sa2_sum += sa2(gen, numlist);
+		asa2 = sa2(gen, numlist);
 		t1= clock();
-		tsa2 += double(t1 - t0)/CLOCKS_PER_SEC;
+		file << asa2 << ", ";
+		file << double(t1 - t0)/CLOCKS_PER_SEC << endl;
+
+		cout << "Trial " << trial << " done!" << endl;
     }
 
-    cout << "kk average residue: " << kk_sum / (int64_t) 100 << endl;
-    cout << "kk average time taken (s) : " << tkk / (double) 100 << endl << endl;
-
-    cout << "rr1 average residue: " << rr1_sum / (int64_t) 100 << endl;
-    cout << "rr1 average time taken (s) : " << trr1 / (double) 100 << endl << endl;
-
-    cout << "rr2 average residue: " << rr2_sum / (int64_t) 100 << endl;
-    cout << "rr2 average time taken (s) : " << trr2 / (double) 100 << endl << endl;
-
-    cout << "hc1 average residue: " << hc1_sum / (int64_t) 100 << endl;
-    cout << "hc1 average time taken (s) : " << thc1 / (double) 100 << endl << endl;
-
-    cout << "hc2 average residue: " << hc2_sum / (int64_t) 100 << endl;
-    cout << "hc2 average time taken (s) : " << thc2 / (double) 100 << endl << endl;
-
-    cout << "sa1 average residue: " << sa1_sum / (int64_t) 100 << endl;
-    cout << "sa1 average time taken (s) : " << tsa1 / (double) 100 << endl << endl;
-
-    cout << "sa2 average residue: " << sa2_sum / (int64_t) 100 << endl;
-    cout << "sa2 average time taken (s) : " << tsa2 / (double) 100 << endl << endl;
-
+    file.close();
 
     return 0;
 }
