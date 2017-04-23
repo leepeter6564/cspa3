@@ -1,9 +1,9 @@
 CXX=g++
 
-simul: simul.cpp
-	$(CXX) -std=c++11 -Wall -o simul simul.cpp
+simul: simul_1.cpp
+	$(CXX) -std=c++11 -Wall -o simul_1 simul_1.cpp
 
 clean:
 	rm -f *.o
-	rm -f simul
+	rm -f simul_1
 
